@@ -25,11 +25,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.AccessControlException;
-import java.util.Map;
 import java.util.Properties;
-
-import org.apache.maven.wrapper.cli.CommandLineParser;
-import org.apache.maven.wrapper.cli.SystemPropertiesCommandLineConverter;
 
 /**
  * @author Hans Dockter
@@ -66,8 +62,6 @@ public class MavenWrapperMain
 
         try 
         {
-            Properties systemProperties = System.getProperties();
-            systemProperties.putAll( parseSystemPropertiesFromArgs( args ) );
             addSystemProperties( rootDir );
         }
         catch ( AccessControlException e )
@@ -81,21 +75,13 @@ public class MavenWrapperMain
                                  new BootstrapMainStarter() );
     }
 
-    private static Map<String, String> parseSystemPropertiesFromArgs( String[] args )
-    {
-        SystemPropertiesCommandLineConverter converter = new SystemPropertiesCommandLineConverter();
-        CommandLineParser commandLineParser = new CommandLineParser();
-        converter.configure( commandLineParser );
-        commandLineParser.allowUnknownOptions();
-        return converter.convert( commandLineParser.parse( args ) );
-    }
-
     private static void addSystemProperties( Path rootDir )
     {
-        System.getProperties().putAll( 
-                       SystemPropertiesHandler.getSystemProperties( mavenUserHome().resolve( "maven.properties" ) ) );
-        System.getProperties().putAll( 
-                       SystemPropertiesHandler.getSystemProperties( rootDir.resolve( "maven.properties" ) ) );
+        SystemPropertiesHandler.getSystemProperties( mavenUserHome().resolve( "maven.properties" ) ).entrySet().stream()
+            .forEach( e -> System.setProperty( e.getKey(), e.getValue() ) );
+
+        SystemPropertiesHandler.getSystemProperties( rootDir.resolve( "maven.properties" ) ).entrySet().stream()
+            .forEach( e -> System.setProperty( e.getKey(), e.getValue() ) );
     }
 
     private static Path rootDir( Path wrapperJar )
@@ -131,20 +117,20 @@ public class MavenWrapperMain
                MavenWrapperMain.class.getResourceAsStream( POM_PROPERTIES ) )
             {
             
-            if ( resourceAsStream == null )
-            {
-                return "3.7.0-SNAPSHOT";
-//                throw new RuntimeException( "No maven properties found." );
-            }
-                Properties mavenProperties = new Properties();
-                mavenProperties.load( resourceAsStream );
-                String version = mavenProperties.getProperty( "version" );
-                if ( version == null )
+                if ( resourceAsStream == null )
                 {
-                    throw new RuntimeException( "No version number specified in build receipt resource." );
+                    return "3.7.0-SNAPSHOT";
+    //                throw new RuntimeException( "No maven properties found." );
                 }
-                return version;
-            }
+                    Properties mavenProperties = new Properties();
+                    mavenProperties.load( resourceAsStream );
+                    String version = mavenProperties.getProperty( "version" );
+                    if ( version == null )
+                    {
+                        throw new RuntimeException( "No version number specified in build receipt resource." );
+                    }
+                    return version;
+                }
         }
         catch ( Exception e )
         {
