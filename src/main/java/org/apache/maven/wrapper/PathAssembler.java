@@ -19,11 +19,9 @@ package org.apache.maven.wrapper;
  * under the License.
  */
 
-import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
 
 /**
  * @author Hans Dockter
@@ -51,8 +49,7 @@ public class PathAssembler
     public LocalDistribution getDistribution( WrapperConfiguration configuration )
     {
         String baseName = getDistName( configuration.getDistribution() );
-        String distName = removeExtension( baseName );
-        String rootDirName = rootDirName( distName, configuration );
+        String rootDirName = removeExtension( baseName );
         Path distDir = getBaseDir( configuration.getDistributionBase() )
                         .resolve( configuration.getDistributionPath() )
                         .resolve( rootDirName );
@@ -61,27 +58,6 @@ public class PathAssembler
                         .resolve( rootDirName )
                         .resolve( baseName );
         return new LocalDistribution( distDir, distZip );
-    }
-
-    private String rootDirName( String distName, WrapperConfiguration configuration )
-    {
-        String urlHash = getMd5Hash( configuration.getDistribution().toString() );
-        return String.format( "%s/%s", distName, urlHash );
-    }
-
-    private String getMd5Hash( String string )
-    {
-        try
-        {
-            MessageDigest messageDigest = MessageDigest.getInstance( "MD5" );
-            byte[] bytes = string.getBytes();
-            messageDigest.update( bytes );
-            return new BigInteger( 1, messageDigest.digest() ).toString( 32 );
-        }
-        catch ( Exception e )
-        {
-            throw new RuntimeException( "Could not hash input string.", e );
-        }
     }
 
     private String removeExtension( String name )
@@ -107,11 +83,11 @@ public class PathAssembler
 
     private Path getBaseDir( String base )
     {
-        if ( base.equals( MAVEN_USER_HOME_STRING ) )
+        if ( MAVEN_USER_HOME_STRING.equals( base ) )
         {
             return mavenUserHome;
         }
-        else if ( base.equals( PROJECT_STRING ) )
+        else if ( PROJECT_STRING.equals( base ) )
         {
             return Paths.get( System.getProperty( "user.dir" ) );
         }
